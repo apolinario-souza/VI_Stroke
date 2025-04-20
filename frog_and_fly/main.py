@@ -271,6 +271,9 @@ while cap.isOpened():
     # Mostra informações
     cv2.putText(black_frame, f'Pontos: {pontos}', (screen_width - 200, 50),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
+    cv2.putText(black_frame, f'Acuracia: {(pontos/cont_mosca*100 if cont_mosca > 0 else 0):.1f}%', 
+                (screen_width - 250, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+
     
     minutos = tempo_restante // 60
     segundos = tempo_restante % 60
