@@ -12,7 +12,9 @@ import math
 import os
 import time
 import random
-from constantes import web_cam, lim, velocidade_variavel, duracao, velocidade_mosca
+import pandas as pd
+from datetime import datetime
+from constantes import web_cam, lim, velocidade_variavel, duracao, velocidade_mosca, id_suj
 
 
 # Detecta tamanho da tela usando tkinter
@@ -114,7 +116,7 @@ cont_mosca = 0
 
 # Loop principal
 while cap.isOpened():
-    print(cont_mosca)
+    
     ret, frame = cap.read()
     if not ret:
         continue
@@ -266,10 +268,14 @@ while cap.isOpened():
             if mosca_x >= 0 and mosca_x + mosca.shape[1] <= screen_width:
                 black_frame[y_offset:y_offset+mosca.shape[0], mosca_x:mosca_x+mosca.shape[1]] = mosca_bgr
     
-    # Mostra a pontuação na tela
+    # Mostra informações
     cv2.putText(black_frame, f'Pontos: {pontos}', (screen_width - 200, 50),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
     
+    minutos = tempo_restante // 60
+    segundos = tempo_restante % 60
+    cv2.putText(black_frame, f'Tempo: {minutos:02d}:{segundos:02d}', (50, 50),
+                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
        
     
 
@@ -279,5 +285,40 @@ while cap.isOpened():
     if cv2.waitKey(1) & 0xFF == 27 or tempo_restante ==0:
         break
 
+
+# Pega a data de hoje
+data_hoje = datetime.today().strftime('%Y-%m-%d')  # Formato: 2025-04-20
+
+# Cria o nome do arquivo com a data
+nome_arquivo = 'suj'+str(id_suj)+f'_{data_hoje}.xlsx'
+
+
+# Cria um DataFrame com as duas variáveis
+df = pd.DataFrame([{
+    'Pontos': pontos,
+    'n_moscas': cont_mosca
+}])
+
+# Salva como arquivo .xlsx
+df.to_excel('resultados/'+nome_arquivo, index=False)  # index=False para não salvar o índice
+
+
 cap.release()
 cv2.destroyAllWindows()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
