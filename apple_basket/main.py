@@ -14,7 +14,8 @@ import os
 from collections import deque
 from datetime import datetime
 import time
-from constantes import lim, id_suj, web_cam, apple_speed, duracao
+import pandas as pd
+from constantes import lim, id_suj, web_cam, apple_speed, duracao,posicao_variavel,id_suj
  
 
 # Configurações iniciais
@@ -117,6 +118,8 @@ spawn_rate = 45
 spawn_counter = 0
 pontos = 0
 erros = 0
+macas_perdidas = 0
+acuracia = 0
 
 class Apple:
     def __init__(self, x):
@@ -158,9 +161,27 @@ class Apple:
         else:
             cv2.circle(frame, (int(self.x), int(self.y)), apple_size//2, (0, 0, 255), -1)
 
+spawn_order = 0  # Controla a ordem de spawn (0, 1, 2, 0, 1, 2...)
+
 def spawn_apple():
-    x = random.randint(track_start + apple_width//2, track_start + track_width - apple_width//2)
+    global spawn_order
+    
+    # Define as 3 posições x fixas na ordem desejada
+    fixed_x_positions = [
+        track_start + track_width // 4,    # 1/4
+        track_start + 3 * track_width // 4,  # 3/4
+        track_start + track_width // 2    # 1/2
+    ]
+    if posicao_variavel == 0:
+        x = fixed_x_positions[spawn_order]
+        spawn_order = (spawn_order + 1) % 3  # Cicla entre 0, 1, 2
+    else:
+        x = random.choice(fixed_x_positions)
+        
+    
     apples.append(Apple(x))
+    
+
 
 def draw_basket(frame, x, y):
     if basket_img is not None and basket_img.shape[2] == 4:
@@ -249,29 +270,48 @@ while cap.isOpened():
             
             cv2.addWeighted(temp_frame, 0.5, game_frame, 0.5, 0, game_frame)
     
+    active_apples = []
     for apple in apples:
         if not apple.collected:
+        # Verifica se a maçã foi coletada pela cesta
             if (basket_x < apple.x < basket_x + basket_width and
                 basket_y < apple.y + apple_size//2 and
                 apple.y - apple_size//2 < basket_y + basket_height):
                 apple.collected = True
                 pontos += 1
-            
-            if not apple.update():
+        
+        # Se não foi coletada, verifica se saiu da tela
+            if apple.update():  # Retorna True se a maçã saiu da parte inferior
+                if not apple.collected:  # Só conta como perdida se não foi coletada
+                    macas_perdidas += 1
+            else:
                 apple.draw(game_frame)
                 active_apples.append(apple)
-                
-    
     apples = active_apples
     
     draw_basket(game_frame, basket_x, basket_y)
     
-    print(erros)
     
     
     
-    cv2.putText(game_frame, f'Pontos: {pontos}', (screen_width - 200, 50),
+    
+    cv2.putText(game_frame, f'Pontos: {pontos}', (screen_width - int(screen_width*0.2), int(screen_width*0.04)),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 255), 2)
+   
+    if macas_perdidas == 0:
+        acuracia = 0
+        if pontos > 0:
+           acuracia = pontos*100
+    elif macas_perdidas > 0 and pontos >0:
+        acuracia = pontos/macas_perdidas*100
+    
+        
+     
+    
+    cv2.putText(game_frame, f'Acuracia: {acuracia:.1f}%', 
+                (screen_width - 250, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+
+
     
     minutos = tempo_restante // 60
     segundos = tempo_restante % 60
@@ -281,6 +321,17 @@ while cap.isOpened():
     cv2.imshow('Apple Catcher', game_frame)
     if cv2.waitKey(1) & 0xFF == 27 or tempo_restante ==0:
         break
+
+
+data_hoje = datetime.today().strftime('%Y-%m-%d')
+nome_arquivo = f'suj{id_suj}_{data_hoje}.xlsx'
+df = pd.DataFrame([{
+    'Pontos': pontos,
+    'Macas_perdidas': macas_perdidas,
+    'Precisao': acuracia
+}])
+df.to_excel('resultados/'+nome_arquivo, index=False)
+
 
 cap.release()
 cv2.destroyAllWindows()

@@ -324,7 +324,6 @@ nome_arquivo = f'suj{id_suj}_{data_hoje}.xlsx'
 df = pd.DataFrame([{
     'Pontos': pontos,
     'n_balaos': cont_balao,
-    'acertos_pedra': acertos_pedra,
     'precisao': f"{(acertos_pedra/cont_balao*100 if cont_balao > 0 else 0):.1f}%"
 }])
 df.to_excel('resultados/'+nome_arquivo, index=False)

@@ -302,8 +302,19 @@ df = pd.DataFrame([{
     'n_moscas': cont_mosca
 }])
 
+
+data_hoje = datetime.today().strftime('%Y-%m-%d')
+nome_arquivo = f'suj{id_suj}_{data_hoje}.xlsx'
+df = pd.DataFrame([{
+    'Pontos': pontos,
+    'n_moscas': cont_mosca,
+    'precisao': f"{(pontos/cont_mosca*100 if cont_mosca> 0 else 0):.1f}%"
+}])
+
 # Salva como arquivo .xlsx
 df.to_excel('resultados/'+nome_arquivo, index=False)  # index=False para não salvar o índice
+
+
 
 
 cap.release()
