@@ -10,6 +10,7 @@ import numpy as np
 import tkinter as tk
 import math
 from collections import deque
+from constantes import web_cam
 
 class KalmanFilter:
     def __init__(self):
@@ -46,7 +47,7 @@ kf_finger = KalmanFilter()
 history_size = 3
 distance_history = deque(maxlen=history_size)
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(web_cam)
 cv2.namedWindow('Hand Tracking', cv2.WINDOW_NORMAL)
 cv2.setWindowProperty('Hand Tracking', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, screen_width)
